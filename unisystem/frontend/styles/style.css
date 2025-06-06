@@ -1,0 +1,33 @@
+:root {
+    --primary: rgb(0, 0, 205);
+    --secondary: rgb(20, 20, 225)
+}
+
+* {
+    margin: 0px;
+}
+
+header{
+    width: 100vw;
+    height: 60px;
+    margin-bottom: 20px;
+    background-color: var(--primary);
+}
+
+header ul {
+    display: flex;
+    justify-content: space-between;
+}
+.list-item {
+    padding-right: 20px;
+}
+
+.list-item img {
+    max-height: 50px;
+    width: auto;
+}
+
+.bi {
+    color: white;
+    font-size: 25px;
+}
