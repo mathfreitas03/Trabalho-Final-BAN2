@@ -1,9 +1,9 @@
 const searchRegistryButton = document.querySelector('.search-register-button')
-const form = document.querySelector('.register-form')
-const registryOption = form.querySelector('#tipo-registro')
+const insertRegistryButton = document.querySelector('.add-register-button')
+const registerForm = document.querySelector('.register-form')
+const registryOption = registerForm.querySelector('#tipo-registro')
 
 function loadForm(option) {
-    const registerForm = document.querySelector('.register-form');
     const todasFormRows = registerForm.querySelectorAll('.form-row');
 
     todasFormRows.forEach(div => {
@@ -137,3 +137,219 @@ registryOption.addEventListener('change', () => {
     loadForm(registryOption.value) 
     }
 )
+
+function createCardsList(arrayDados){
+    const formContainer = document.querySelector('.form-container')
+    const filhos = Array.from(formContainer.children);
+
+    filhos.forEach((el) => el.remove());
+
+    const botaoVoltar = `
+    <div class="btn" style="background-color: rgb(0, 0, 205); color: white; margin-bottom: 10px;" onclick="voltarPesquisa()">Voltar <i class="bi bi-arrow-left-circle botao-voltar"></i></div>
+    `
+
+    formContainer.insertAdjacentHTML("beforeend", botaoVoltar)
+
+    for(dados of arrayDados){
+        console.log(dados)
+        createCard(dados, formContainer)
+    }
+
+}
+
+function createCard(dados, parentDiv){
+    parentDiv.insertAdjacentHTML('beforeend', `
+        <div class="card-campo" style="border: 1px solid lightgrey; border-radius: 10px; padding: 16px; margin-bottom: 10px;">
+        </div>
+    `);
+
+    // Seleciona a última div.card-campo adicionada
+    const cardCampo = parentDiv.querySelector('.card-campo:last-of-type');
+    
+    for (const chave in dados) {
+        const valor = dados[chave];
+        const chaveFormatada = chave
+            .replace('  -', ' ')         
+            .replace(/^./, letra => letra.toUpperCase());
+
+        if(chave == 'id' || chave == 'matricula'){
+            const cardCampoLinha = `
+                    <div class="form-row">
+                        <label for="${chave}">${chaveFormatada}</label>
+                        <input type="text" name="${chave}" id="${chave}" value="${valor}" readonly>
+                        <div class="btn" style="margin-left: 16px; background-color: rgb(0, 0, 205); color: white;" onclick="excluirRegistro()"><i class="bi bi-trash3 botao-excluir"</i></div>
+                    </div>
+                        `
+            cardCampo.insertAdjacentHTML('beforeend', cardCampoLinha);
+        }else {
+            const cardCampoLinha = `
+                    <div class="form-row">
+                        <label for="${chave}">${chaveFormatada}</label>
+                        <input type="text" name="${chave}" id="${chave}" value="${valor}" readonly>
+                    </div>
+                        `
+            cardCampo.insertAdjacentHTML('beforeend', cardCampoLinha);
+        }
+    }
+
+}
+
+searchRegistryButton.addEventListener('click', async() => {
+    const formData = new FormData(registerForm);
+    const dados = {};
+    for (const [chave, valor] of formData.entries()) {
+        dados[chave] = valor;
+    }
+
+    try {
+        const response = await fetch('/search', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(dados)
+        });
+
+        if (!response.ok) {
+            throw new Error('Erro na requisição');
+        }
+
+        const resultado = await response.json();
+        console.log('Resultado da busca:', resultado);
+        createCardsList(resultado)
+
+    } catch (error) {
+        console.error('Erro ao buscar dados:', error);
+    }
+})
+
+function voltarPesquisa() {
+    location.reload()
+}
+
+function loadInsertScreen(){
+
+}
+
+insertRegistryButton.addEventListener('click', async () => {
+    const formContainer = document.querySelector('.form-container')
+    const todasFormRows = registerForm.querySelectorAll('.form-row');
+
+    todasFormRows.forEach(div => {
+        div.remove();
+        });
+    searchRegistryButton.remove();
+    const botaoVoltar = `
+    <div class="btn" style="background-color: rgb(0, 0, 205); color: white; margin-bottom: 10px;" onclick="voltarPesquisa()">Voltar <i class="bi bi-arrow-left-circle botao-voltar"></i></div>
+    `
+    
+    const selectDiv = `
+    <div class="form-row">
+        <label for="tipo-registro-add">Tipo do Registro</label>
+        <select name="tipo-registro-add" id="tipo-registro-add">
+        <option value="aconselhador" selected>Aconselhamentos</option>
+        <option value="assistencia" selected>Alocação de Assistências Estudantis</option>
+        <option value="departamento" selected>Departamentos</option>
+        <option value="escritorio" selected>Escritórios</option>
+        <option value="especialidade" selected>Especialidades</option>
+        <option value="estudante" selected>Estudantes</option>
+        <option value="professor" selected>Professores</option>
+        <option value="professordepartamento" selected>Alocação de Professores à Departamentos</option>
+        <option value="professorprojeto" selected>Alocação de Professores à Projetos</option>
+        <option value="projeto" selected>Projetos</option>
+        <option value="sala" selected>Salas</option>
+        </select>
+    </div>
+    `
+    formContainer.insertAdjacentHTML("afterbegin", selectDiv)
+    formContainer.insertAdjacentHTML("afterbegin", botaoVoltar)
+
+    const camposPessoa = [
+    ["matricula", "number"],
+    ["nome", "text"],
+    ["idade", "number"]
+    ];
+
+    const camposPorTipo = {
+    "pessoa": camposPessoa,
+
+    "professor": [
+        ...camposPessoa,
+        ["especialidade", "number"],
+        ["cod_sala", "text"],
+        ["horas_semanais", "number"]
+    ],
+
+    "estudante": [
+        ...camposPessoa,
+        ["id_departamento", "number"],
+        ["aconselhador", "number"],
+        ["tipo_curso", "number"]
+    ],
+
+    "projeto": [
+        ["id", "number"],
+        ["nome", "text"],
+        ["gerente", "number"],
+        ["data_inicio", "date"],
+        ["data_fim", "date"],
+        ["orcamento", "number"],
+        ["orgao", "number"]
+    ],
+
+    "especialidade": [
+        ["id", "number"],
+        ["nome", "text"]
+    ],
+    "sala": [
+        ["cod_sala", "text"]
+    ],
+    "escritorio": [
+        ["id", "number"],
+        ["endereco", "text"]
+    ],
+    "departamento": [
+        ["id", "number"],
+        ["nome", "text"],
+        ["lider", "number"],
+        ["escritorio", "number"]
+    ],
+    "professordepartamento": [
+        ["matricula", "number"],
+        ["id_departamento", "number"],
+        ["horas_dedicadas", "number"]
+    ],
+    "tipo_curso": [
+        ["id", "number"],
+        ["nome", "text"]
+    ],
+    "aconselhador": [
+        ["matricula_aconselhador", "number"],
+        ["matricula_aconselhado", "number"]
+    ],
+    "orgao": [
+        ["id", "number"],
+        ["nome", "text"]
+    ],
+    "professorprojeto": [
+        ["matricula", "number"],
+        ["id_projeto", "number"]
+    ],
+    "assistencia": [
+        ["supervisor", "number"],
+        ["matricula_estudante", "number"],
+        ["id_projeto", "number"]
+    ],
+    "usuarios_teste": [
+        ["id", "number"],
+        ["nickname", "text"],
+        ["password", "text"]
+    ],
+    "usuarios": [
+        ["nickname", "text"],
+        ["email", "text"],
+        ["user_password", "text"]
+    ]
+    };
+
+})

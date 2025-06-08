@@ -3,6 +3,10 @@ import express from 'express'
 import dotenv from 'dotenv'
 import path from 'path'
 import userRoute from './routes/user.routes.js';
+const searchRouteModule = await import('./routes/search.routes.js')
+const searchRoute = searchRouteModule.default
+const insertRouteModule = await import('./routes/insert.route.js')
+const insertRoute = insertRouteModule.default
 import fs from 'fs'
 import pg from 'pg'
 
@@ -32,12 +36,17 @@ const PORT = process.env.PORT || 3000
 app.listen(PORT, () => {
     console.log(`Rodando na porta ${PORT}`)
 })
+
+app.use(express.json())
+
 // Permissão para que o app use os arquivos do controller
 app.use('/backend', express.static(path.join(__dirname, '..', 'backend')));
 
 app.use(express.static(path.join(__dirname, '..', 'frontend')));
 
 app.use('/users', userRoute);
+
+app.use('/search', searchRoute(pool));
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'frontend', 'pages', 'index.html'), err => {
@@ -67,3 +76,5 @@ app.get('/testar_conexao', async (req, res) => {
     res.status(500).send('Erro na conexão');
   }
 });
+
+app.use('/insert', insertRoute(pool))
